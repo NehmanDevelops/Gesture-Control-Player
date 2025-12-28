@@ -90,7 +90,7 @@ export default function HowToUseModal({ isOpen, onClose }: HowToUseModalProps) {
                   <div className="text-cyan-400 text-2xl">✋</div>
                   <div>
                     <div className="font-semibold text-cyan-400 mb-1">Neutral Position</div>
-                    <div className="text-sm">Keep index finger in neutral position → <span className="text-slate-300">Volume stays the same</span></div>
+                    <div className="text-sm">Make a fist → <span className="text-slate-300">Volume stays the same</span></div>
                   </div>
                 </div>
                 

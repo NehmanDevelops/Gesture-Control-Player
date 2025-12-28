@@ -13,12 +13,21 @@ export interface HandTrackingResult {
   landmarks: HandLandmark[];
   indexFingerUp: boolean; // Index finger is raised
   indexFingerDown: boolean; // Index finger is down
+  isFist: boolean;
   isHandDetected: boolean;
 }
 
 // Index finger detection thresholds - very sensitive for immediate response
 const INDEX_FINGER_UP_THRESHOLD = 0.02; // Index tip must be this much above MCP to be considered "up" (very sensitive)
 const INDEX_FINGER_DOWN_THRESHOLD = 0.01; // Index tip must be this much below MCP to be considered "down" (very sensitive)
+
+const FIST_DISTANCE_THRESHOLD = 0.12;
+
+function dist2D(a: { x: number; y: number }, b: { x: number; y: number }) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
 
 export function useHandTracking() {
   const [isLoading, setIsLoading] = useState(true);
@@ -82,6 +91,32 @@ export function useHandTracking() {
         const indexTip = landmarks[8]; // Index finger tip
         const indexMCP = landmarks[5]; // Index finger MCP (base)
         const indexPIP = landmarks[6]; // Index finger PIP (middle joint)
+
+        // Fist detection (used as the neutral gesture)
+        // MediaPipe coords are normalized; use distance-to-palm + curl heuristics.
+        const wrist = landmarks[0];
+        const middleMCP = landmarks[9];
+        const palmCenter = {
+          x: (wrist.x + middleMCP.x) / 2,
+          y: (wrist.y + middleMCP.y) / 2,
+        };
+
+        const middleTip = landmarks[12];
+        const middlePIP = landmarks[10];
+        const ringTip = landmarks[16];
+        const ringPIP = landmarks[14];
+        const pinkyTip = landmarks[20];
+        const pinkyPIP = landmarks[18];
+        const thumbTip = landmarks[4];
+
+        const curledIndex = indexTip.y > indexPIP.y && dist2D(indexTip, palmCenter) < FIST_DISTANCE_THRESHOLD;
+        const curledMiddle = middleTip.y > middlePIP.y && dist2D(middleTip, palmCenter) < FIST_DISTANCE_THRESHOLD;
+        const curledRing = ringTip.y > ringPIP.y && dist2D(ringTip, palmCenter) < FIST_DISTANCE_THRESHOLD;
+        const curledPinky = pinkyTip.y > pinkyPIP.y && dist2D(pinkyTip, palmCenter) < FIST_DISTANCE_THRESHOLD;
+        const curledThumb = dist2D(thumbTip, palmCenter) < (FIST_DISTANCE_THRESHOLD * 1.15);
+
+        const curledCount = [curledIndex, curledMiddle, curledRing, curledPinky, curledThumb].filter(Boolean).length;
+        const isFist = curledCount >= 4;
         
         // Calculate if index finger is up or down
         // In MediaPipe, lower Y values = higher on screen
@@ -89,8 +124,8 @@ export function useHandTracking() {
         const yDifference = indexMCP.y - indexTip.y; // Positive = finger is up
         
         // Simple, sensitive detection - no extension check needed for immediate response
-        const rawIndexFingerUp = yDifference > INDEX_FINGER_UP_THRESHOLD;
-        const rawIndexFingerDown = yDifference < -INDEX_FINGER_DOWN_THRESHOLD;
+        const rawIndexFingerUp = !isFist && yDifference > INDEX_FINGER_UP_THRESHOLD;
+        const rawIndexFingerDown = !isFist && yDifference < -INDEX_FINGER_DOWN_THRESHOLD;
 
         stableCountRef.current.up = rawIndexFingerUp ? Math.min(3, stableCountRef.current.up + 1) : 0;
         stableCountRef.current.down = rawIndexFingerDown ? Math.min(3, stableCountRef.current.down + 1) : 0;
@@ -131,6 +166,11 @@ export function useHandTracking() {
         } else if (stableCountRef.current.down >= 2) {
           indexFingerUp = false;
         }
+
+        if (isFist) {
+          indexFingerUp = false;
+          indexFingerDown = false;
+        }
         
         previousStateRef.current = { up: indexFingerUp, down: indexFingerDown };
 
@@ -142,6 +182,7 @@ export function useHandTracking() {
           })),
           indexFingerUp,
           indexFingerDown,
+          isFist,
           isHandDetected: true,
         });
       } else {
