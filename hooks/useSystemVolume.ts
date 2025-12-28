@@ -59,11 +59,13 @@ export function useSystemVolume(volume: number) {
     // Update volume using gain node
     if (gainNodeRef.current) {
       const clampedVolume = Math.max(0, Math.min(1, volume));
-      // Use exponential ramp for smoother volume changes
       const currentTime = audioContextRef.current?.currentTime || 0;
-      gainNodeRef.current.gain.exponentialRampToValueAtTime(
-        Math.max(0.0001, clampedVolume), // Exponential ramp can't go to 0
-        currentTime + 0.1
+      // Cancel any pending ramps; we update frequently (~30fps) so scheduled ramps can lag behind.
+      gainNodeRef.current.gain.cancelScheduledValues(currentTime);
+      // Set immediately for responsive gesture control.
+      gainNodeRef.current.gain.setValueAtTime(
+        Math.max(0.0001, clampedVolume),
+        currentTime
       );
     }
   }, [volume]);

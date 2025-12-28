@@ -34,6 +34,7 @@ export default function Home() {
   const [indexFingerUp, setIndexFingerUp] = useState(false);
   const [indexFingerDown, setIndexFingerDown] = useState(false);
   const volumeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const gestureStateRef = useRef<{ up: boolean; down: boolean }>({ up: false, down: false });
   
   // Control system volume
   useSystemVolume(volume);
@@ -50,9 +51,13 @@ export default function Home() {
   }, []);
 
   const handleIndexFingerState = (isUp: boolean, isDown: boolean) => {
-    const wasUp = indexFingerUp;
-    const wasDown = indexFingerDown;
-    
+    const prev = gestureStateRef.current;
+    if (prev.up === isUp && prev.down === isDown) {
+      return;
+    }
+
+    gestureStateRef.current = { up: isUp, down: isDown };
+
     setIndexFingerUp(isUp);
     setIndexFingerDown(isDown);
     setIsActive(isUp || isDown);
@@ -189,7 +194,7 @@ export default function Home() {
                             >
                               <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
                             </motion.svg>
-                            <span className="text-white font-semibold">Increasing</span>
+                            <span className="text-white font-semibold">Volume increasing</span>
                           </div>
                         </motion.div>
                       )}
@@ -210,7 +215,7 @@ export default function Home() {
                             >
                               <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
                             </motion.svg>
-                            <span className="text-white font-semibold">Decreasing</span>
+                            <span className="text-white font-semibold">Volume decreasing</span>
                           </div>
                         </motion.div>
                       )}

@@ -27,6 +27,7 @@ export function useHandTracking() {
   const handLandmarkerRef = useRef<HandLandmarker | null>(null);
   const isInitializedRef = useRef(false);
   const previousStateRef = useRef<{ up: boolean; down: boolean } | null>(null);
+  const stableCountRef = useRef<{ up: number; down: number }>({ up: 0, down: 0 });
 
   const initializeHandLandmarker = useCallback(async () => {
     try {
@@ -90,6 +91,9 @@ export function useHandTracking() {
         // Simple, sensitive detection - no extension check needed for immediate response
         const rawIndexFingerUp = yDifference > INDEX_FINGER_UP_THRESHOLD;
         const rawIndexFingerDown = yDifference < -INDEX_FINGER_DOWN_THRESHOLD;
+
+        stableCountRef.current.up = rawIndexFingerUp ? Math.min(3, stableCountRef.current.up + 1) : 0;
+        stableCountRef.current.down = rawIndexFingerDown ? Math.min(3, stableCountRef.current.down + 1) : 0;
         
         // Apply minimal hysteresis to prevent flickering while keeping sensitivity
         let indexFingerUp = rawIndexFingerUp;
@@ -112,6 +116,21 @@ export function useHandTracking() {
             indexFingerDown = yDifference < -(INDEX_FINGER_DOWN_THRESHOLD * 0.3);
           }
         }
+
+        if (stableCountRef.current.up < 2 && stableCountRef.current.down < 2) {
+          indexFingerUp = false;
+          indexFingerDown = false;
+        } else if (stableCountRef.current.up >= 2 && stableCountRef.current.down >= 2) {
+          if (stableCountRef.current.up > stableCountRef.current.down) {
+            indexFingerDown = false;
+          } else {
+            indexFingerUp = false;
+          }
+        } else if (stableCountRef.current.up >= 2) {
+          indexFingerDown = false;
+        } else if (stableCountRef.current.down >= 2) {
+          indexFingerUp = false;
+        }
         
         previousStateRef.current = { up: indexFingerUp, down: indexFingerDown };
 
@@ -128,6 +147,7 @@ export function useHandTracking() {
       } else {
         setHandResult(null);
         previousStateRef.current = null;
+        stableCountRef.current = { up: 0, down: 0 };
       }
     } catch (err) {
       console.error('Error detecting hands:', err);
