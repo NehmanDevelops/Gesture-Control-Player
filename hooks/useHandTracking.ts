@@ -16,10 +16,9 @@ export interface HandTrackingResult {
   isHandDetected: boolean;
 }
 
-// Index finger detection thresholds - improved for better detection
-const INDEX_FINGER_UP_THRESHOLD = 0.08; // Index tip must be this much above MCP to be considered "up" (lowered for better sensitivity)
-const INDEX_FINGER_DOWN_THRESHOLD = 0.03; // Index tip must be this much below MCP to be considered "down" (lowered for better sensitivity)
-const SMOOTHING_FACTOR = 0.7; // Smoothing factor for state changes (0-1, higher = more smoothing)
+// Index finger detection thresholds - very sensitive for immediate response
+const INDEX_FINGER_UP_THRESHOLD = 0.02; // Index tip must be this much above MCP to be considered "up" (very sensitive)
+const INDEX_FINGER_DOWN_THRESHOLD = 0.01; // Index tip must be this much below MCP to be considered "down" (very sensitive)
 
 export function useHandTracking() {
   const [isLoading, setIsLoading] = useState(true);
@@ -88,37 +87,29 @@ export function useHandTracking() {
         // If index tip Y is significantly less than MCP Y, finger is raised
         const yDifference = indexMCP.y - indexTip.y; // Positive = finger is up
         
-        // Also check PIP to tip distance for more reliable detection
-        const pipToTipDistance = Math.sqrt(
-          Math.pow(indexPIP.x - indexTip.x, 2) + 
-          Math.pow(indexPIP.y - indexTip.y, 2)
-        );
-        
-        // More reliable detection: finger is up if tip is above MCP AND extended
-        const isExtended = pipToTipDistance > 0.05; // Finger is extended
-        const rawIndexFingerUp = yDifference > INDEX_FINGER_UP_THRESHOLD && isExtended;
+        // Simple, sensitive detection - no extension check needed for immediate response
+        const rawIndexFingerUp = yDifference > INDEX_FINGER_UP_THRESHOLD;
         const rawIndexFingerDown = yDifference < -INDEX_FINGER_DOWN_THRESHOLD;
         
-        // Apply smoothing to prevent flickering - use hysteresis
+        // Apply minimal hysteresis to prevent flickering while keeping sensitivity
         let indexFingerUp = rawIndexFingerUp;
         let indexFingerDown = rawIndexFingerDown;
         
         if (previousStateRef.current) {
-          // Hysteresis: require stronger signal to change state, but allow immediate activation
+          // Very light hysteresis - only to prevent rapid flickering
+          // Allow immediate activation, but require slightly more movement to deactivate
           if (rawIndexFingerUp) {
-            // If detected as up, activate immediately
-            indexFingerUp = true;
+            indexFingerUp = true; // Immediate activation
           } else if (previousStateRef.current.up) {
-            // If was up but now not detected, require lower threshold to turn off (hysteresis)
-            indexFingerUp = yDifference > (INDEX_FINGER_UP_THRESHOLD * 0.5);
+            // Only deactivate if finger moves back significantly
+            indexFingerUp = yDifference > (INDEX_FINGER_UP_THRESHOLD * 0.3);
           }
           
           if (rawIndexFingerDown) {
-            // If detected as down, activate immediately
-            indexFingerDown = true;
+            indexFingerDown = true; // Immediate activation
           } else if (previousStateRef.current.down) {
-            // If was down but now not detected, require stronger signal to turn off (hysteresis)
-            indexFingerDown = yDifference < -(INDEX_FINGER_DOWN_THRESHOLD * 0.5);
+            // Only deactivate if finger moves back significantly
+            indexFingerDown = yDifference < -(INDEX_FINGER_DOWN_THRESHOLD * 0.3);
           }
         }
         
