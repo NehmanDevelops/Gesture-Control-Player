@@ -50,11 +50,14 @@ export default function Home() {
   }, []);
 
   const handleIndexFingerState = (isUp: boolean, isDown: boolean) => {
+    const wasUp = indexFingerUp;
+    const wasDown = indexFingerDown;
+    
     setIndexFingerUp(isUp);
     setIndexFingerDown(isDown);
     setIsActive(isUp || isDown);
     
-    // Clear any existing interval
+    // Always clear existing interval first to prevent duplicates
     if (volumeIntervalRef.current) {
       clearInterval(volumeIntervalRef.current);
       volumeIntervalRef.current = null;
@@ -62,22 +65,25 @@ export default function Home() {
     
     // Gradually increase volume when index finger is up
     if (isUp) {
+      // Start new interval - update more frequently for smoother control
       volumeIntervalRef.current = setInterval(() => {
         setVolume((prev) => {
-          const newVol = Math.min(1, prev + 0.01); // Increase by 1% every 100ms
+          const newVol = Math.min(1, prev + 0.02); // Increase by 2% every 33ms
           return newVol;
         });
-      }, 100);
+      }, 33); // ~30fps update rate for smooth control
     }
     // Gradually decrease volume when index finger is down
     else if (isDown) {
+      // Start new interval
       volumeIntervalRef.current = setInterval(() => {
         setVolume((prev) => {
-          const newVol = Math.max(0, prev - 0.01); // Decrease by 1% every 100ms
+          const newVol = Math.max(0, prev - 0.02); // Decrease by 2% every 33ms
           return newVol;
         });
-      }, 100);
+      }, 33); // ~30fps update rate for smooth control
     }
+    // When neutral, volume stays the same (interval already cleared above)
   };
   
   useEffect(() => {
@@ -123,47 +129,47 @@ export default function Home() {
                     isMobile={isMobile} 
                     enabled={appEnabled} 
                   />
-                  {/* Big Volume Indicator */}
+                  {/* Volume Direction Indicator - Aesthetic Arrow */}
                   <AnimatePresence>
                     {indexFingerUp && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
+                        initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.8 }}
+                        className="absolute top-20 left-1/2 transform -translate-x-1/2 pointer-events-none z-50"
                       >
-                        <div className="bg-green-500/90 backdrop-blur-md px-12 py-8 rounded-2xl border-4 border-green-400 shadow-2xl">
-                          <motion.div
-                            animate={{ scale: [1, 1.1, 1] }}
-                            transition={{ duration: 0.5, repeat: Infinity }}
-                            className="text-6xl mb-4 text-center"
+                        <div className="bg-green-500/90 backdrop-blur-md px-6 py-4 rounded-xl border-2 border-green-400 shadow-xl flex items-center gap-3">
+                          <motion.svg
+                            animate={{ y: [0, -5, 0] }}
+                            transition={{ duration: 0.6, repeat: Infinity }}
+                            className="w-8 h-8 text-white"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            🔊
-                          </motion.div>
-                          <div className="text-5xl md:text-7xl font-bold text-white text-center">
-                            INCREASING VOLUME
-                          </div>
+                            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
+                          </motion.svg>
+                          <span className="text-white font-semibold text-lg">Increasing</span>
                         </div>
                       </motion.div>
                     )}
                     {indexFingerDown && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
+                        initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                        className="absolute top-20 left-1/2 transform -translate-x-1/2 pointer-events-none z-50"
                       >
-                        <div className="bg-red-500/90 backdrop-blur-md px-12 py-8 rounded-2xl border-4 border-red-400 shadow-2xl">
-                          <motion.div
-                            animate={{ scale: [1, 1.1, 1] }}
-                            transition={{ duration: 0.5, repeat: Infinity }}
-                            className="text-6xl mb-4 text-center"
+                        <div className="bg-red-500/90 backdrop-blur-md px-6 py-4 rounded-xl border-2 border-red-400 shadow-xl flex items-center gap-3">
+                          <motion.svg
+                            animate={{ y: [0, 5, 0] }}
+                            transition={{ duration: 0.6, repeat: Infinity }}
+                            className="w-8 h-8 text-white"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            🔉
-                          </motion.div>
-                          <div className="text-5xl md:text-7xl font-bold text-white text-center">
-                            DECREASING VOLUME
-                          </div>
+                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
+                          </motion.svg>
+                          <span className="text-white font-semibold text-lg">Decreasing</span>
                         </div>
                       </motion.div>
                     )}
