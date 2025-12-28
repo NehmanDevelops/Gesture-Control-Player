@@ -95,121 +95,182 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-900 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen px-4 py-10 md:px-8">
+      <div className="mx-auto w-full max-w-7xl">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="mb-10"
         >
-          <h1 className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-cyan-600 mb-2">
-            Gesture Control Player
-          </h1>
-          <p className="text-slate-400 text-lg md:text-xl">
-            Minority Report Style Interface
-          </p>
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-slate-200 backdrop-blur">
+              <span className="h-2 w-2 rounded-full bg-cyan-400" />
+              <span>Minority Report style gesture UI</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-300">Local demo</span>
+            </div>
+            <h1 className="text-balance text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-cyan-400 to-indigo-300 md:text-6xl">
+              Gesture Control Player
+            </h1>
+            <p className="max-w-2xl text-pretty text-base text-slate-300 md:text-lg">
+              Use your camera to control system volume with simple index-finger gestures. Turn it on, raise your hand, and watch the interface respond.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setAppEnabled((v) => !v)}
+                className={`inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold shadow-lg transition-colors ${
+                  appEnabled
+                    ? 'bg-slate-700/70 hover:bg-slate-600/70 text-white'
+                    : 'bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white'
+                }`}
+              >
+                {appEnabled ? 'Disable Camera' : 'Enable Camera'}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-200 backdrop-blur transition-colors hover:bg-white/10"
+              >
+                How to use
+              </motion.button>
+            </div>
+          </div>
         </motion.div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
           {/* Left: Camera View */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.15 }}
             className="lg:order-1"
           >
-            <div className="relative aspect-video w-full">
-              {appEnabled ? (
-                <>
-                  <CameraView 
-                    onVolumeChange={() => {}} 
-                    onIndexFingerState={handleIndexFingerState}
-                    isMobile={isMobile} 
-                    enabled={appEnabled} 
-                  />
-                  {/* Volume Direction Indicator - Aesthetic Arrow */}
-                  <AnimatePresence>
-                    {indexFingerUp && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10, scale: 0.8 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.8 }}
-                        className="absolute top-20 left-1/2 transform -translate-x-1/2 pointer-events-none z-50"
-                      >
-                        <div className="bg-green-500/90 backdrop-blur-md px-6 py-4 rounded-xl border-2 border-green-400 shadow-xl flex items-center gap-3">
-                          <motion.svg
-                            animate={{ y: [0, -5, 0] }}
-                            transition={{ duration: 0.6, repeat: Infinity }}
-                            className="w-8 h-8 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
-                          </motion.svg>
-                          <span className="text-white font-semibold text-lg">Increasing</span>
-                        </div>
-                      </motion.div>
-                    )}
-                    {indexFingerDown && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.8 }}
-                        className="absolute top-20 left-1/2 transform -translate-x-1/2 pointer-events-none z-50"
-                      >
-                        <div className="bg-red-500/90 backdrop-blur-md px-6 py-4 rounded-xl border-2 border-red-400 shadow-xl flex items-center gap-3">
-                          <motion.svg
-                            animate={{ y: [0, 5, 0] }}
-                            transition={{ duration: 0.6, repeat: Infinity }}
-                            className="w-8 h-8 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
-                          </motion.svg>
-                          <span className="text-white font-semibold text-lg">Decreasing</span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              ) : (
-                <div className="relative w-full h-full bg-slate-900 rounded-lg flex items-center justify-center">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center p-8"
-                  >
-                    <div className="text-6xl mb-4">👋</div>
-                    <div className="text-slate-400 text-lg mb-6">
-                      Ready to start gesture control
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setAppEnabled(true)}
-                      className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold py-4 px-8 rounded-lg text-lg shadow-lg transition-all"
-                    >
-                      Turn On App
-                    </motion.button>
-                  </motion.div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur md:p-5">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm font-semibold text-slate-200">Camera</div>
+                  <div className="text-xs text-slate-400">Hand tracking overlay + gesture detection</div>
                 </div>
-              )}
+                <div className={`rounded-full px-3 py-1 text-xs font-semibold ${appEnabled ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-300'}`}>
+                  {appEnabled ? 'Enabled' : 'Disabled'}
+                </div>
+              </div>
+
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-slate-900/60 ring-1 ring-white/10">
+                {appEnabled ? (
+                  <>
+                    <CameraView 
+                      onVolumeChange={() => {}} 
+                      onIndexFingerState={handleIndexFingerState}
+                      isMobile={isMobile} 
+                      enabled={appEnabled} 
+                    />
+                    {/* Volume Direction Indicator - Aesthetic Arrow */}
+                    <AnimatePresence>
+                      {indexFingerUp && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                          className="absolute top-5 left-1/2 transform -translate-x-1/2 pointer-events-none z-50"
+                        >
+                          <div className="bg-emerald-500/80 backdrop-blur-md px-5 py-3 rounded-xl border border-emerald-300/40 shadow-xl flex items-center gap-3">
+                            <motion.svg
+                              animate={{ y: [0, -5, 0] }}
+                              transition={{ duration: 0.6, repeat: Infinity }}
+                              className="w-7 h-7 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
+                            </motion.svg>
+                            <span className="text-white font-semibold">Increasing</span>
+                          </div>
+                        </motion.div>
+                      )}
+                      {indexFingerDown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                          className="absolute top-5 left-1/2 transform -translate-x-1/2 pointer-events-none z-50"
+                        >
+                          <div className="bg-red-500/80 backdrop-blur-md px-5 py-3 rounded-xl border border-red-300/40 shadow-xl flex items-center gap-3">
+                            <motion.svg
+                              animate={{ y: [0, 5, 0] }}
+                              transition={{ duration: 0.6, repeat: Infinity }}
+                              className="w-7 h-7 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
+                            </motion.svg>
+                            <span className="text-white font-semibold">Decreasing</span>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
+                ) : (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="text-center p-8"
+                    >
+                      <div className="text-6xl mb-4">👋</div>
+                      <div className="text-slate-300 text-lg font-semibold mb-2">
+                        Enable camera to start
+                      </div>
+                      <div className="text-slate-400 text-sm mb-6">
+                        You can disable anytime. No data is uploaded.
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setAppEnabled(true)}
+                        className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-lg transition-all"
+                      >
+                        Enable Camera
+                      </motion.button>
+                    </motion.div>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
 
           {/* Right: Media Player Dashboard */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.2 }}
             className="lg:order-2"
           >
-            <div className="bg-slate-800 rounded-2xl p-6 md:p-8 border border-cyan-500/20 shadow-2xl h-full flex flex-col">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur md:p-6 h-full flex flex-col">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm font-semibold text-slate-200">Dashboard</div>
+                  <div className="text-xs text-slate-400">Audio demo + live volume feedback</div>
+                </div>
+                <motion.div
+                  animate={{
+                    color: isActive ? '#22c55e' : appEnabled ? '#94a3b8' : '#ef4444',
+                  }}
+                  className="flex items-center gap-2 text-xs font-semibold"
+                >
+                  <span className="h-2 w-2 rounded-full bg-current" />
+                  <span>{isActive ? 'Active' : appEnabled ? 'Idle' : 'Off'}</span>
+                </motion.div>
+              </div>
+
               {/* Video Player for Testing */}
-              <div className="flex-1 bg-slate-900 rounded-lg mb-6 relative overflow-hidden min-h-[300px]">
+              <div className="flex-1 rounded-xl mb-6 relative overflow-hidden min-h-[280px] bg-slate-900/60 ring-1 ring-white/10">
                 <VideoPlayer volume={volume} />
               </div>
 
@@ -217,78 +278,57 @@ export default function Home() {
               <VolumeControl volume={volume} isActive={isActive} />
 
               {/* Gesture Controls Panel */}
-              <div className="mt-6 pt-6 border-t border-slate-700">
-                <h3 className="text-sm font-semibold text-cyan-400 mb-3">Gesture Controls</h3>
-                <div className="space-y-2 text-xs text-slate-300">
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <h3 className="text-sm font-semibold text-cyan-300 mb-3">Gesture Controls</h3>
+                <div className="space-y-2 text-xs text-slate-200">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <span className="text-green-400">👆</span>
                       <span>Index finger up</span>
                     </span>
-                    <span className="text-green-400 font-semibold">→ Volume ↑</span>
+                    <span className="text-green-300 font-semibold">Volume ↑</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <span className="text-red-400">👇</span>
                       <span>Index finger down</span>
                     </span>
-                    <span className="text-red-400 font-semibold">→ Volume ↓</span>
+                    <span className="text-red-300 font-semibold">Volume ↓</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <span>✋</span>
                       <span>Neutral position</span>
                     </span>
-                    <span className="text-slate-400">→ Hold volume</span>
+                    <span className="text-slate-400">Hold</span>
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-slate-700 text-xs text-slate-400">
+                <div className="mt-3 pt-3 border-t border-white/10 text-xs text-slate-400">
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="w-3 h-3 bg-green-500/30 rounded"></div>
+                    <div className="w-3 h-3 bg-green-500/25 rounded"></div>
                     <span>Top zone = High volume</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500/30 rounded"></div>
+                    <div className="w-3 h-3 bg-red-500/25 rounded"></div>
                     <span>Bottom zone = Low volume</span>
                   </div>
                 </div>
               </div>
 
               {/* Status Indicator */}
-              <div className="mt-6 pt-6 border-t border-slate-700">
-                <div className="flex items-center justify-between text-sm mb-4">
-                  <span className="text-slate-400">Status</span>
-                  <motion.div
-                    animate={{
-                      color: isActive ? '#22c55e' : appEnabled ? '#64748b' : '#ef4444',
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <motion.div
-                      animate={{
-                        scale: isActive ? [1, 1.2, 1] : 1,
-                      }}
-                      transition={{
-                        duration: 1,
-                        repeat: isActive ? Infinity : 0,
-                      }}
-                      className="w-2 h-2 rounded-full bg-current"
-                    />
-                    <span>{isActive ? 'Active' : appEnabled ? 'Idle' : 'Off'}</span>
-                  </motion.div>
-                </div>
+              <div className="mt-6 pt-6 border-t border-white/10">
                 {appEnabled && (
                   <motion.button
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       setAppEnabled(false);
                       setIsActive(false);
                       setVolume(0.5);
                     }}
-                    className="w-full mt-4 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                    className="w-full bg-slate-700/70 hover:bg-slate-600/70 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors"
                   >
                     Turn Off App
                   </motion.button>
@@ -307,7 +347,7 @@ export default function Home() {
         >
           <button
             onClick={() => setShowModal(true)}
-            className="bg-cyan-500 hover:bg-cyan-600 text-white p-4 rounded-full shadow-lg transition-all hover:scale-110"
+            className="bg-cyan-500/90 hover:bg-cyan-500 text-white p-4 rounded-full shadow-lg shadow-cyan-500/10 transition-all hover:scale-110 ring-1 ring-white/10"
             aria-label="How to use"
           >
             <HelpCircleIcon size={24} />

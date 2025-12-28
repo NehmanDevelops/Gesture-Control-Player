@@ -13,8 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="min-h-screen antialiased">
+        <div className="min-h-screen">{children}</div>
+      </body>
     </html>
   )
 }
+
 
