@@ -21,7 +21,7 @@ export default function VideoPlayer({ volume }: VideoPlayerProps) {
         
         oscillator.frequency.value = 440; // A4 note
         oscillator.type = 'sine';
-        gainNode.gain.value = volume * 0.3; // Start at current volume
+        gainNode.gain.value = volume * 0.5; // Start at current volume (50% max for better range)
         
         oscillator.connect(gainNode);
         gainNode.connect(audioContextRef.current.destination);
@@ -42,7 +42,13 @@ export default function VideoPlayer({ volume }: VideoPlayerProps) {
     const initAudio = async () => {
       try {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        audioContextRef.current = new AudioContextClass();
+        const audioContext = new AudioContextClass();
+        audioContextRef.current = audioContext;
+        
+        // Resume audio context if suspended (required after user interaction)
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
+        }
         
         // Auto-start the test tone after a short delay (for user interaction)
         setTimeout(() => {
@@ -65,11 +71,19 @@ export default function VideoPlayer({ volume }: VideoPlayerProps) {
     };
   }, []);
 
-  // Update audio volume when volume prop changes
+  // Update audio volume when volume prop changes - immediate updates for responsive control
   useEffect(() => {
     if (gainNodeRef.current) {
       const clampedVolume = Math.max(0, Math.min(1, volume));
-      gainNodeRef.current.gain.value = clampedVolume * 0.3; // Keep it at reasonable level (30% max)
+      const targetVolume = clampedVolume * 0.5; // 50% max for better audible range
+      
+      // Cancel any scheduled changes and set immediately
+      const currentTime = audioContextRef.current?.currentTime || 0;
+      gainNodeRef.current.gain.cancelScheduledValues(currentTime);
+      gainNodeRef.current.gain.setValueAtTime(
+        Math.max(0.001, targetVolume), // Can't go to exactly 0
+        currentTime
+      );
     }
   }, [volume]);
 
@@ -82,10 +96,14 @@ export default function VideoPlayer({ volume }: VideoPlayerProps) {
     }
   };
 
-  const toggleTone = () => {
+  const toggleTone = async () => {
     if (isPlaying) {
       stopTestTone();
     } else {
+      // Resume audio context if needed
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
       startTestTone();
     }
   };
