@@ -1,14 +1,15 @@
 # Gesture Control Player - Minority Report Style Interface
 
-A futuristic web interface that allows you to control volume and playback using hand gestures via your webcam. Built with Next.js, TypeScript, MediaPipe, and Framer Motion.
+A futuristic web interface that lets you control volume with hand gestures via your webcam. Built with Next.js, TypeScript, MediaPipe, and Framer Motion.
 
 ## Features
 
-- 🤏 **Pinch Gesture Control**: Control volume by pinching your thumb and index finger
+- 👆👇 **Index Finger Gestures**: Raise/lower your index finger to increase/decrease volume
+- 🖐️ **Neutral (Open Palm)**: Show an open palm to hold/pause volume changes
 - 🎨 **Real-time Hand Skeleton Visualization**: See your hand tracked with cyan highlights
 - 🔊 **Smooth Volume Control**: Instant volume feedback with animated visualizations
 - 📱 **Mobile Responsive**: Works on mobile devices with front-facing camera support
-- 🎯 **Open Hand vs Closed Fist Detection**: Advanced gesture recognition
+- 🎯 **Gesture Feedback UI**: On-screen indicators show when volume is increasing/decreasing/neutral
 
 ## Tech Stack
 
@@ -45,14 +46,18 @@ npm run dev
 
 ## How to Use
 
-1. **Raise Your Hand**: Position your hand in front of the camera
-2. **Pinch to Grab**: Bring your thumb and index finger together to grab the volume slider
-3. **Move Fingers Apart**: Spread your thumb and index finger to increase volume
-4. **Close Fist**: Make a fist to decrease volume
+1. **Enable Camera**: Click the “Enable Camera” button and allow permissions
+2. **Raise Your Hand**: Keep your hand in the camera view to start tracking
+3. **Volume Up**: Point your index finger **up** and hold
+4. **Volume Down**: Point your index finger **down** and hold
+5. **Neutral / Hold**: Show an **open palm** (hand open) to hold volume steady
+
+Notes:
+- The dashboard includes an **audio test tone** so you can hear/see volume changes immediately.
+- Browsers can’t reliably change your OS-wide system volume; this app changes volume through Web Audio for the demo audio output.
 
 The interface will show:
 - Cyan skeleton overlay of your hand
-- Green line connecting thumb and index when pinching
 - Real-time volume bar that responds to your gestures
 - Visual feedback indicators
 
@@ -66,6 +71,7 @@ The interface will show:
 ├── components/
 │   ├── CameraView.tsx      # Webcam and canvas overlay
 │   ├── VolumeControl.tsx   # Volume visualization
+│   ├── VideoPlayer.tsx     # Audio test tone
 │   └── HowToUseModal.tsx   # Instructions modal
 ├── hooks/
 │   └── useHandTracking.ts  # MediaPipe hand tracking logic
@@ -84,6 +90,11 @@ The interface will show:
 - Make sure you've granted camera permissions
 - Check if another application is using your camera
 - Try refreshing the page
+
+### Gestures feel inconsistent
+- Improve lighting and keep your hand centered
+- Keep your hand 1–2 feet from the camera
+- Use Chrome/Edge for best MediaPipe performance
 
 ### MediaPipe not loading
 - Check your internet connection (model files are loaded from CDN)
