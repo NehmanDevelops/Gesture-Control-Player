@@ -129,7 +129,7 @@ export default function CameraView({ onVolumeChange, onIndexFingerState, onNeutr
         // Update index finger / neutral state
         if (handResult) {
           onIndexFingerState(handResult.indexFingerUp, handResult.indexFingerDown);
-          onNeutralState?.(handResult.isFist);
+          onNeutralState?.(handResult.isOpenPalm);
         }
       }
       animationFrameRef.current = requestAnimationFrame(processFrame);
@@ -201,15 +201,15 @@ export default function CameraView({ onVolumeChange, onIndexFingerState, onNeutr
           <div className="text-cyan-400 flex items-center gap-2">
             {handResult.indexFingerUp && <span className="text-green-400">👆</span>}
             {handResult.indexFingerDown && <span className="text-red-400">👇</span>}
-            {handResult.isFist && <span>✊</span>}
-            {!handResult.isFist && !handResult.indexFingerUp && !handResult.indexFingerDown && <span>🖐️</span>}
+            {handResult.isOpenPalm && <span>🖐️</span>}
+            {!handResult.isOpenPalm && !handResult.indexFingerUp && !handResult.indexFingerDown && <span>✋</span>}
             <span>Hand Detected</span>
           </div>
           <div className="text-xs text-slate-300 mt-1">
             {handResult.indexFingerUp && 'Index Finger: UP'}
             {handResult.indexFingerDown && 'Index Finger: DOWN'}
-            {handResult.isFist && 'Neutral: FIST'}
-            {!handResult.isFist && !handResult.indexFingerUp && !handResult.indexFingerDown && 'Neutral: Open hand'}
+            {handResult.isOpenPalm && 'Neutral: OPEN PALM'}
+            {!handResult.isOpenPalm && !handResult.indexFingerUp && !handResult.indexFingerDown && 'Neutral: Other'}
           </div>
         </div>
       )}

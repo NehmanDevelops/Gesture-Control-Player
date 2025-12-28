@@ -229,8 +229,8 @@ export default function Home() {
                           className="absolute top-5 left-1/2 transform -translate-x-1/2 pointer-events-none z-50"
                         >
                           <div className="bg-slate-900/70 backdrop-blur-md px-5 py-3 rounded-xl border border-white/15 shadow-xl flex items-center gap-3">
-                            <span className="text-white text-lg">✊</span>
-                            <span className="text-white font-semibold">Neutral (fist)</span>
+                            <span className="text-white text-lg">🖐️</span>
+                            <span className="text-white font-semibold">Neutral (open palm)</span>
                           </div>
                         </motion.div>
                       )}
@@ -317,8 +317,8 @@ export default function Home() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <span>✊</span>
-                      <span>Neutral (fist)</span>
+                      <span>🖐️</span>
+                      <span>Neutral (open palm)</span>
                     </span>
                     <span className="text-slate-400">Hold</span>
                   </div>
