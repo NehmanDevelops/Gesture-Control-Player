@@ -69,28 +69,28 @@ export default function HowToUseModal({ isOpen, onClose }: HowToUseModalProps) {
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <div className="text-green-400 text-2xl">⬆️</div>
+                  <div className="text-green-400 text-2xl">👆</div>
                   <div>
-                    <div className="font-semibold text-green-400 mb-1">Move Hand Up</div>
-                    <div className="text-sm">Raise your hand upward → <span className="text-green-400">Increases volume</span></div>
-                    <div className="text-xs text-slate-400 mt-1">Top of screen = Maximum volume</div>
+                    <div className="font-semibold text-green-400 mb-1">Raise Index Finger</div>
+                    <div className="text-sm">Point your index finger up and hold → <span className="text-green-400">Volume increases gradually</span></div>
+                    <div className="text-xs text-slate-400 mt-1">Keep finger raised to continue increasing</div>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <div className="text-red-400 text-2xl">⬇️</div>
+                  <div className="text-red-400 text-2xl">👇</div>
                   <div>
-                    <div className="font-semibold text-red-400 mb-1">Move Hand Down</div>
-                    <div className="text-sm">Lower your hand downward → <span className="text-red-400">Decreases volume</span></div>
-                    <div className="text-xs text-slate-400 mt-1">Bottom of screen = Minimum volume</div>
+                    <div className="font-semibold text-red-400 mb-1">Lower Index Finger</div>
+                    <div className="text-sm">Point your index finger down and hold → <span className="text-red-400">Volume decreases gradually</span></div>
+                    <div className="text-xs text-slate-400 mt-1">Keep finger down to continue decreasing</div>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
                   <div className="text-cyan-400 text-2xl">✋</div>
                   <div>
-                    <div className="font-semibold text-cyan-400 mb-1">Hold Position</div>
-                    <div className="text-sm">Keep your hand steady → <span className="text-slate-300">Maintains current volume</span></div>
+                    <div className="font-semibold text-cyan-400 mb-1">Neutral Position</div>
+                    <div className="text-sm">Keep index finger in neutral position → <span className="text-slate-300">Volume stays the same</span></div>
                   </div>
                 </div>
                 

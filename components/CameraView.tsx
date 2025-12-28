@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 
 interface CameraViewProps {
   onVolumeChange: (volume: number) => void;
+  onIndexFingerState: (isUp: boolean, isDown: boolean) => void;
   isMobile?: boolean;
   enabled?: boolean;
 }
@@ -20,7 +21,7 @@ const HAND_CONNECTIONS = [
   [5, 9], [9, 13], [13, 17], // Palm
 ];
 
-export default function CameraView({ onVolumeChange, isMobile = false, enabled = true }: CameraViewProps) {
+export default function CameraView({ onVolumeChange, onIndexFingerState, isMobile = false, enabled = true }: CameraViewProps) {
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -53,71 +54,12 @@ export default function CameraView({ onVolumeChange, isMobile = false, enabled =
     const drawHand = () => {
       if (!handResult || !ctx) return;
 
-      const { landmarks, handPosition, volumeLevel, movementDirection } = handResult;
+      const { landmarks, indexFingerUp, indexFingerDown } = handResult;
       const width = canvas.width;
       const height = canvas.height;
 
       // Clear canvas
       ctx.clearRect(0, 0, width, height);
-
-      // Draw volume zones (gradient background)
-      const topZoneHeight = height * 0.1; // Top 10% = max volume
-      const bottomZoneHeight = height * 0.9; // Bottom 90% = min volume
-      
-      // Top zone (high volume) - green gradient
-      const topGradient = ctx.createLinearGradient(0, 0, 0, topZoneHeight);
-      topGradient.addColorStop(0, 'rgba(34, 197, 94, 0.2)'); // Green-500
-      topGradient.addColorStop(1, 'rgba(34, 197, 94, 0.05)');
-      ctx.fillStyle = topGradient;
-      ctx.fillRect(0, 0, width, topZoneHeight);
-      
-      // Bottom zone (low volume) - red gradient
-      const bottomGradient = ctx.createLinearGradient(0, bottomZoneHeight, 0, height);
-      bottomGradient.addColorStop(0, 'rgba(34, 197, 94, 0.05)');
-      bottomGradient.addColorStop(1, 'rgba(239, 68, 68, 0.2)'); // Red-500
-      ctx.fillStyle = bottomGradient;
-      ctx.fillRect(0, bottomZoneHeight, width, height - bottomZoneHeight);
-
-      // Draw volume level indicator line
-      const volumeY = height * handPosition;
-      ctx.strokeStyle = volumeLevel > 0.5 ? '#22c55e' : '#ef4444'; // Green for high, red for low
-      ctx.lineWidth = 3;
-      ctx.setLineDash([10, 5]);
-      ctx.beginPath();
-      ctx.moveTo(0, volumeY);
-      ctx.lineTo(width, volumeY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Draw movement direction arrows
-      if (movementDirection !== 'neutral') {
-        const wrist = landmarks[0];
-        const wristX = wrist.x * width;
-        const wristY = wrist.y * height;
-        
-        ctx.fillStyle = movementDirection === 'up' ? '#22c55e' : '#ef4444';
-        ctx.font = 'bold 40px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        // Draw arrow
-        const arrowY = wristY - 60;
-        if (movementDirection === 'up') {
-          ctx.fillText('↑', wristX, arrowY);
-        } else {
-          ctx.fillText('↓', wristX, arrowY);
-        }
-        
-        // Draw arrow background circle
-        ctx.fillStyle = movementDirection === 'up' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)';
-        ctx.beginPath();
-        ctx.arc(wristX, arrowY, 30, 0, 2 * Math.PI);
-        ctx.fill();
-        
-        // Redraw arrow on top
-        ctx.fillStyle = movementDirection === 'up' ? '#22c55e' : '#ef4444';
-        ctx.fillText(movementDirection === 'up' ? '↑' : '↓', wristX, arrowY);
-      }
 
       // Draw hand connections (skeleton)
       ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)'; // Cyan-500 with opacity
@@ -142,28 +84,39 @@ export default function CameraView({ onVolumeChange, isMobile = false, enabled =
         ctx.fill();
       });
 
-      // Highlight fingertips in Cyan
-      const fingertipIndices = [4, 8, 12, 16, 20]; // Thumb, Index, Middle, Ring, Pinky tips
-      ctx.fillStyle = '#06b6d4'; // Cyan-500
-      fingertipIndices.forEach((index) => {
-        const tip = landmarks[index];
-        ctx.beginPath();
-        ctx.arc(tip.x * width, tip.y * height, 8, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-
-      // Draw wrist position indicator (larger circle)
-      const wrist = landmarks[0];
-      ctx.fillStyle = volumeLevel > 0.5 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)';
+      // Highlight index finger tip prominently
+      const indexTip = landmarks[8];
+      const indexMCP = landmarks[5];
+      
+      // Draw index finger connection with highlight
+      ctx.strokeStyle = indexFingerUp ? '#22c55e' : indexFingerDown ? '#ef4444' : 'rgba(6, 182, 212, 0.8)';
+      ctx.lineWidth = indexFingerUp || indexFingerDown ? 5 : 3;
       ctx.beginPath();
-      ctx.arc(wrist.x * width, wrist.y * height, 15, 0, 2 * Math.PI);
+      ctx.moveTo(indexMCP.x * width, indexMCP.y * height);
+      ctx.lineTo(indexTip.x * width, indexTip.y * height);
+      ctx.stroke();
+      
+      // Highlight index finger tip with larger circle
+      ctx.fillStyle = indexFingerUp ? '#22c55e' : indexFingerDown ? '#ef4444' : '#06b6d4';
+      ctx.beginPath();
+      ctx.arc(indexTip.x * width, indexTip.y * height, indexFingerUp || indexFingerDown ? 15 : 10, 0, 2 * Math.PI);
       ctx.fill();
       
-      // Draw center dot
+      // Draw white center dot
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(wrist.x * width, wrist.y * height, 5, 0, 2 * Math.PI);
+      ctx.arc(indexTip.x * width, indexTip.y * height, 5, 0, 2 * Math.PI);
       ctx.fill();
+
+      // Highlight other fingertips in Cyan (smaller)
+      const otherFingertips = [4, 12, 16, 20]; // Thumb, Middle, Ring, Pinky tips
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
+      otherFingertips.forEach((index) => {
+        const tip = landmarks[index];
+        ctx.beginPath();
+        ctx.arc(tip.x * width, tip.y * height, 6, 0, 2 * Math.PI);
+        ctx.fill();
+      });
     };
 
     const processFrame = () => {
@@ -172,9 +125,9 @@ export default function CameraView({ onVolumeChange, isMobile = false, enabled =
         detectHands(video, timestamp);
         drawHand();
 
-        // Update volume based on hand position
+        // Update index finger state
         if (handResult) {
-          onVolumeChange(handResult.volumeLevel);
+          onIndexFingerState(handResult.indexFingerUp, handResult.indexFingerDown);
         }
       }
       animationFrameRef.current = requestAnimationFrame(processFrame);
@@ -190,7 +143,7 @@ export default function CameraView({ onVolumeChange, isMobile = false, enabled =
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [enabled, isInitialized, handResult, detectHands, onVolumeChange, isPlaying]);
+  }, [enabled, isInitialized, handResult, detectHands, onIndexFingerState, isPlaying]);
 
   const handleUserMedia = () => {
     setIsPlaying(true);
@@ -244,31 +197,18 @@ export default function CameraView({ onVolumeChange, isMobile = false, enabled =
       {handResult && (
         <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-2 rounded-lg text-sm">
           <div className="text-cyan-400 flex items-center gap-2">
-            {handResult.movementDirection === 'up' && <span className="text-green-400">↑</span>}
-            {handResult.movementDirection === 'down' && <span className="text-red-400">↓</span>}
-            {handResult.movementDirection === 'neutral' && <span>⚪</span>}
+            {handResult.indexFingerUp && <span className="text-green-400">👆</span>}
+            {handResult.indexFingerDown && <span className="text-red-400">👇</span>}
+            {!handResult.indexFingerUp && !handResult.indexFingerDown && <span>✋</span>}
             <span>Hand Detected</span>
           </div>
           <div className="text-xs text-slate-300 mt-1">
-            Volume: {(handResult.volumeLevel * 100).toFixed(0)}%
-          </div>
-          <div className="text-xs text-slate-400 mt-1">
-            {handResult.movementDirection === 'up' && 'Moving Up → Volume ↑'}
-            {handResult.movementDirection === 'down' && 'Moving Down → Volume ↓'}
-            {handResult.movementDirection === 'neutral' && 'Hold position'}
+            {handResult.indexFingerUp && 'Index Finger: UP'}
+            {handResult.indexFingerDown && 'Index Finger: DOWN'}
+            {!handResult.indexFingerUp && !handResult.indexFingerDown && 'Index Finger: Neutral'}
           </div>
         </div>
       )}
-      
-      {/* Volume zone labels */}
-      <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm px-3 py-2 rounded-lg text-xs">
-        <div className="text-green-400 font-semibold">↑ High Volume</div>
-        <div className="text-slate-400 mt-1">Move hand up</div>
-      </div>
-      <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm px-3 py-2 rounded-lg text-xs">
-        <div className="text-red-400 font-semibold">↓ Low Volume</div>
-        <div className="text-slate-400 mt-1">Move hand down</div>
-      </div>
     </div>
   );
 }

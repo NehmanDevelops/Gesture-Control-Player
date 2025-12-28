@@ -11,16 +11,14 @@ export interface HandLandmark {
 
 export interface HandTrackingResult {
   landmarks: HandLandmark[];
-  handPosition: number; // Y position normalized (0 = top, 1 = bottom)
-  volumeLevel: number; // 0 to 1, calculated from hand position
-  movementDirection: 'up' | 'down' | 'neutral';
+  indexFingerUp: boolean; // Index finger is raised
+  indexFingerDown: boolean; // Index finger is down
   isHandDetected: boolean;
 }
 
-// Volume control zones
-const MIN_Y = 0.1; // Top of screen (volume = 1.0)
-const MAX_Y = 0.9; // Bottom of screen (volume = 0.0)
-const MOVEMENT_THRESHOLD = 0.02; // Minimum movement to register direction change
+// Index finger detection thresholds
+const INDEX_FINGER_UP_THRESHOLD = 0.15; // Index tip must be this much above MCP to be considered "up"
+const INDEX_FINGER_DOWN_THRESHOLD = 0.05; // Index tip must be this much below MCP to be considered "down"
 
 export function useHandTracking() {
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +26,6 @@ export function useHandTracking() {
   const [handResult, setHandResult] = useState<HandTrackingResult | null>(null);
   const handLandmarkerRef = useRef<HandLandmarker | null>(null);
   const isInitializedRef = useRef(false);
-  const previousYRef = useRef<number | null>(null);
 
   const initializeHandLandmarker = useCallback(async () => {
     try {
@@ -79,25 +76,17 @@ export function useHandTracking() {
       if (results.landmarks && results.landmarks.length > 0) {
         const landmarks = results.landmarks[0];
         
-        // Use wrist (landmark 0) as the reference point for hand position
-        const wrist = landmarks[0];
-        const handY = wrist.y; // Normalized Y position (0 = top, 1 = bottom)
+        // Get index finger landmarks
+        const indexTip = landmarks[8]; // Index finger tip
+        const indexMCP = landmarks[5]; // Index finger MCP (base)
         
-        // Calculate volume based on hand position
-        // Top of screen (low Y) = high volume (1.0)
-        // Bottom of screen (high Y) = low volume (0.0)
-        const clampedY = Math.max(MIN_Y, Math.min(MAX_Y, handY));
-        const volumeLevel = 1 - (clampedY - MIN_Y) / (MAX_Y - MIN_Y);
+        // Calculate if index finger is up or down
+        // In MediaPipe, lower Y values = higher on screen
+        // If index tip Y is significantly less than MCP Y, finger is raised
+        const yDifference = indexMCP.y - indexTip.y; // Positive = finger is up
         
-        // Determine movement direction
-        let movementDirection: 'up' | 'down' | 'neutral' = 'neutral';
-        if (previousYRef.current !== null) {
-          const deltaY = previousYRef.current - handY; // Positive = moving up, Negative = moving down
-          if (Math.abs(deltaY) > MOVEMENT_THRESHOLD) {
-            movementDirection = deltaY > 0 ? 'up' : 'down';
-          }
-        }
-        previousYRef.current = handY;
+        const indexFingerUp = yDifference > INDEX_FINGER_UP_THRESHOLD;
+        const indexFingerDown = yDifference < -INDEX_FINGER_DOWN_THRESHOLD;
 
         setHandResult({
           landmarks: landmarks.map((lm) => ({
@@ -105,14 +94,12 @@ export function useHandTracking() {
             y: lm.y,
             z: lm.z,
           })),
-          handPosition: handY,
-          volumeLevel,
-          movementDirection,
+          indexFingerUp,
+          indexFingerDown,
           isHandDetected: true,
         });
       } else {
         setHandResult(null);
-        previousYRef.current = null;
       }
     } catch (err) {
       console.error('Error detecting hands:', err);

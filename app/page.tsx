@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import CameraView from '@/components/CameraView';
 import VolumeControl from '@/components/VolumeControl';
+import VideoPlayer from '@/components/VideoPlayer';
 import HowToUseModal from '@/components/HowToUseModal';
+import { useSystemVolume } from '@/hooks/useSystemVolume';
 // Simple HelpCircle icon component
 const HelpCircleIcon = ({ size = 24 }: { size?: number }) => (
   <svg
@@ -29,6 +31,12 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [appEnabled, setAppEnabled] = useState(false);
+  const [indexFingerUp, setIndexFingerUp] = useState(false);
+  const [indexFingerDown, setIndexFingerDown] = useState(false);
+  const volumeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Control system volume
+  useSystemVolume(volume);
 
   useEffect(() => {
     // Detect mobile device
@@ -41,14 +49,44 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const handleVolumeChange = (newVolume: number) => {
-    if (newVolume > 0.1) {
-      setIsActive(true);
-      setVolume(newVolume);
-    } else {
-      setIsActive(false);
+  const handleIndexFingerState = (isUp: boolean, isDown: boolean) => {
+    setIndexFingerUp(isUp);
+    setIndexFingerDown(isDown);
+    setIsActive(isUp || isDown);
+    
+    // Clear any existing interval
+    if (volumeIntervalRef.current) {
+      clearInterval(volumeIntervalRef.current);
+      volumeIntervalRef.current = null;
+    }
+    
+    // Gradually increase volume when index finger is up
+    if (isUp) {
+      volumeIntervalRef.current = setInterval(() => {
+        setVolume((prev) => {
+          const newVol = Math.min(1, prev + 0.01); // Increase by 1% every 100ms
+          return newVol;
+        });
+      }, 100);
+    }
+    // Gradually decrease volume when index finger is down
+    else if (isDown) {
+      volumeIntervalRef.current = setInterval(() => {
+        setVolume((prev) => {
+          const newVol = Math.max(0, prev - 0.01); // Decrease by 1% every 100ms
+          return newVol;
+        });
+      }, 100);
     }
   };
+  
+  useEffect(() => {
+    return () => {
+      if (volumeIntervalRef.current) {
+        clearInterval(volumeIntervalRef.current);
+      }
+    };
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-900 p-4 md:p-8">
@@ -78,7 +116,59 @@ export default function Home() {
           >
             <div className="relative aspect-video w-full">
               {appEnabled ? (
-                <CameraView onVolumeChange={handleVolumeChange} isMobile={isMobile} enabled={appEnabled} />
+                <>
+                  <CameraView 
+                    onVolumeChange={() => {}} 
+                    onIndexFingerState={handleIndexFingerState}
+                    isMobile={isMobile} 
+                    enabled={appEnabled} 
+                  />
+                  {/* Big Volume Indicator */}
+                  <AnimatePresence>
+                    {indexFingerUp && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
+                      >
+                        <div className="bg-green-500/90 backdrop-blur-md px-12 py-8 rounded-2xl border-4 border-green-400 shadow-2xl">
+                          <motion.div
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ duration: 0.5, repeat: Infinity }}
+                            className="text-6xl mb-4 text-center"
+                          >
+                            🔊
+                          </motion.div>
+                          <div className="text-5xl md:text-7xl font-bold text-white text-center">
+                            INCREASING VOLUME
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                    {indexFingerDown && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
+                      >
+                        <div className="bg-red-500/90 backdrop-blur-md px-12 py-8 rounded-2xl border-4 border-red-400 shadow-2xl">
+                          <motion.div
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ duration: 0.5, repeat: Infinity }}
+                            className="text-6xl mb-4 text-center"
+                          >
+                            🔉
+                          </motion.div>
+                          <div className="text-5xl md:text-7xl font-bold text-white text-center">
+                            DECREASING VOLUME
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
               ) : (
                 <div className="relative w-full h-full bg-slate-900 rounded-lg flex items-center justify-center">
                   <motion.div
@@ -112,16 +202,9 @@ export default function Home() {
             className="lg:order-2"
           >
             <div className="bg-slate-800 rounded-2xl p-6 md:p-8 border border-cyan-500/20 shadow-2xl h-full flex flex-col">
-              {/* Video/Audio Visualizer Placeholder */}
-              <div className="flex-1 bg-slate-900 rounded-lg mb-6 flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-slate-900" />
-                <div className="relative z-10 text-center">
-                  <div className="text-6xl mb-4">🎵</div>
-                  <div className="text-slate-400 text-sm">Media Player</div>
-                  <div className="text-slate-500 text-xs mt-2">
-                    Volume controlled by gestures
-                  </div>
-                </div>
+              {/* Video Player for Testing */}
+              <div className="flex-1 bg-slate-900 rounded-lg mb-6 relative overflow-hidden min-h-[300px]">
+                <VideoPlayer volume={volume} />
               </div>
 
               {/* Volume Control */}
@@ -133,24 +216,24 @@ export default function Home() {
                 <div className="space-y-2 text-xs text-slate-300">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <span className="text-green-400">⬆️</span>
-                      <span>Move hand up</span>
+                      <span className="text-green-400">👆</span>
+                      <span>Index finger up</span>
                     </span>
                     <span className="text-green-400 font-semibold">→ Volume ↑</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <span className="text-red-400">⬇️</span>
-                      <span>Move hand down</span>
+                      <span className="text-red-400">👇</span>
+                      <span>Index finger down</span>
                     </span>
                     <span className="text-red-400 font-semibold">→ Volume ↓</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <span>✋</span>
-                      <span>Hold position</span>
+                      <span>Neutral position</span>
                     </span>
-                    <span className="text-slate-400">→ Maintain volume</span>
+                    <span className="text-slate-400">→ Hold volume</span>
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-700 text-xs text-slate-400">
